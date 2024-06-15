@@ -6,27 +6,47 @@ import { Graphics as PixiGraphics } from "pixi.js";
 
 const App = () => {
   // Dimensions
-  const [wellHeadHeight, setWellHeadHeight] = useState(100);
-  const [wellHeight, setWellHeight] = useState(100);
-  const [wellTailHeight, setWellTailHeight] = useState(100);
+  const [wellStructure, setWellStructure] = useState([
+    {
+      name: "top",
+      height: 100,
+      width: 240,
+      bgColor: 0xaa0012,
+    },
+    {
+      name: "middle",
+      height: 100,
+      width: 220,
+      bgColor: 0x3311aa,
+    },
+    {
+      name: "bottom",
+      height: 100,
+      width: 200,
+      bgColor: 0x22aa77,
+    },
+  ]);
 
   const maxHeight = 600;
-  const totalHeight = wellHeadHeight + wellHeight + wellTailHeight;
+  const totalHeight = wellStructure.reduce((acc, it) => acc + it.height, 0);
 
   // Virtual Dimensions
-  const virtualWellHeadHeight = (wellHeadHeight * maxHeight) / totalHeight;
-  const wellHeadWidht = 240;
-
-  const virtualWellHeight = (wellHeight * maxHeight) / totalHeight;
-  const wellWidht = 220;
-
-  const virtualWellTailHeight = (wellTailHeight * maxHeight) / totalHeight;
-  const wellTailWidht = 200;
+  const virtualDimensions = wellStructure.map((it) => ({
+    ...it,
+    virtualHeight: (it.height * maxHeight) / totalHeight,
+  }));
 
   // Positions
-  const wellHeadPosition = 200;
-  const offsetPositionWell = virtualWellHeadHeight + wellHeadPosition;
-  const offsetPositionWellTail = offsetPositionWell + virtualWellHeight;
+  const initialPosition = 200;
+  const wellPositions = virtualDimensions.map((it, idx, arr) => ({
+    ...it,
+    position:
+      idx == 0
+        ? initialPosition
+        : arr
+            .slice(0, idx)
+            .reduce((acc, items) => acc + items.virtualHeight, initialPosition),
+  }));
 
   // Base items
   const centerBase = 350;
@@ -34,59 +54,44 @@ const App = () => {
   const draw = useCallback(
     (g: PixiGraphics) => {
       g.clear();
-      g.beginFill(0xaa0012)
-        .drawRect(
-          centerBase - wellHeadWidht / 2,
-          wellHeadPosition,
-          wellHeadWidht,
-          virtualWellHeadHeight
-        )
-        .endFill();
-      g.beginFill(0x3311aa)
-        .drawRect(
-          centerBase - wellWidht / 2,
-          offsetPositionWell,
-          wellWidht,
-          virtualWellHeight
-        )
-        // .lineStyle(0.1, 0x003020)
-        .endFill();
-      g.beginFill(0x22aa77)
-        .drawRect(
-          centerBase - wellTailWidht / 2,
-          offsetPositionWellTail,
-          wellTailWidht,
-          virtualWellTailHeight
-        )
-        .endFill();
+      wellPositions.map((wellPart) => {
+        g.beginFill(wellPart.bgColor)
+          .drawRect(
+            centerBase - wellPart.width / 2,
+            wellPart.position,
+            wellPart.width,
+            wellPart.virtualHeight
+          )
+          .endFill();
+      });
     },
-    [
-      offsetPositionWell,
-      offsetPositionWellTail,
-      virtualWellHeadHeight,
-      virtualWellHeight,
-      virtualWellTailHeight,
-    ]
+    [wellPositions]
   );
+
 
   return (
     <>
-      <input
-        value={wellHeadHeight}
-        onChange={(e) => setWellHeadHeight(+e.target.value)}
-      />
-      <input
-        value={wellHeight}
-        onChange={(e) => setWellHeight(+e.target.value)}
-      />
-      <input
-        value={wellTailHeight}
-        onChange={(e) => setWellTailHeight(+e.target.value)}
-      />
+      <div className="flex gap-4">
+        {wellStructure.map((it, index) => (
+          <div className="flex flex-col gap-2" key={it.name}>
+            <span className="w-full text-start">{it.name}</span>
+            <input
+              className="border border-slate-400 rounded-md"
+              value={it.height}
+              onChange={(e) =>
+                setWellStructure((old) =>
+                  old.map((item, idx) =>
+                    idx === index
+                      ? { ...item, height: Number(e.target.value) }
+                      : item
+                  )
+                )
+              }
+            />
+          </div>
+        ))}
+      </div>
       <Stage width={1200} height={1600} options={{ background: 0xf5f5f5 }}>
-        {/* <Sprite image={bunnyUrl} x={300} y={150} />
-        <Sprite image={bunnyUrl} x={500} y={150} />
-        <Sprite image={bunnyUrl} x={400} y={200} /> */}
         <Graphics draw={draw} />
 
         <Container x={200} y={200}></Container>
