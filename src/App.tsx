@@ -1,13 +1,14 @@
 import { useMemo, useState } from "react";
 import "./App.css";
 
-import { Container, Graphics, Stage } from "@pixi/react";
+import { Container, Graphics, Sprite, Stage } from "@pixi/react";
 import { BlurFilter, Graphics as PixiGraphics } from "pixi.js";
 
 const App = () => {
   // Dimensions
   const [wellStructure, setWellStructure] = useState([
     {
+      type: "wellPart",
       name: "top",
       height: 100,
       width: 240,
@@ -16,6 +17,7 @@ const App = () => {
       actualColor: 0xaa0012,
     },
     {
+      type: "wellPart",
       name: "middle",
       height: 100,
       width: 220,
@@ -24,6 +26,7 @@ const App = () => {
       actualColor: 0x3311aa,
     },
     {
+      type: "wellPart",
       name: "bottom",
       height: 100,
       width: 200,
@@ -32,6 +35,9 @@ const App = () => {
       actualColor: 0x22aa77,
     },
   ]);
+
+  // Base items
+  const centerBase = 350;
 
   const maxHeight = 800;
   const totalHeight = wellStructure.reduce((acc, it) => acc + it.height, 0);
@@ -54,9 +60,6 @@ const App = () => {
             .reduce((acc, items) => acc + items.virtualHeight, initialPosition),
   }));
 
-  // Base items
-  const centerBase = 350;
-
   const draw = wellPositions.map((wellPart) => (g: PixiGraphics) => {
     g.clear();
     g.beginFill(wellPart.actualColor)
@@ -71,6 +74,30 @@ const App = () => {
 
   // without this line, all mouse events are broken
   useMemo(() => new BlurFilter(0), []);
+
+  // FISH
+  const fishSize = {
+    width: 1920,
+    height: 1076,
+  };
+
+  const fishScale = 0.07;
+
+  const [fish, setFish] = useState({
+    realX: centerBase,
+    realY: 100,
+    width: fishScale * fishSize.width,
+    height: fishScale * fishSize.height,
+  });
+
+  const fishPosition = {
+    ...fish,
+    virtualX: fish.realX - fish.width / 2,
+    virtualY:
+      initialPosition +
+      (fish.realY * maxHeight) / totalHeight -
+      fish.height / 2,
+  };
 
   return (
     <>
@@ -93,6 +120,19 @@ const App = () => {
             />
           </div>
         ))}
+      </div>
+      <div className="flex flex-col gap-2 max-w-96">
+        <span className="w-full text-start">fish</span>
+        <input
+          className="border border-slate-400 rounded-md"
+          value={fish.realY}
+          onChange={(e) =>
+            setFish((old) => ({
+              ...old,
+              realY: +e.target.value,
+            }))
+          }
+        />
       </div>
       <Stage width={1200} height={1600} options={{ background: 0xf5f5f5 }}>
         {draw.map((it, idx) => {
@@ -122,6 +162,14 @@ const App = () => {
             />
           );
         })}
+
+        <Sprite
+          x={fishPosition.virtualX}
+          y={fishPosition.virtualY}
+          width={fish.width}
+          height={fish.height}
+          image={"/src/assets/images/nemo.webp"}
+        />
 
         <Container x={200} y={200}></Container>
       </Stage>
