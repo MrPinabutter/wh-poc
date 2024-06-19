@@ -1,10 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 import { Container, Graphics, Sprite, Stage } from "@pixi/react";
-import { BlurFilter, Graphics as PixiGraphics } from "pixi.js";
+import { BlurFilter, Graphics as PixiGraphics, Ticker } from "pixi.js";
+
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 const App = () => {
+  const [animationProgress, setAnimationProgress] = useState(0);
+
   // Dimensions
   const [wellStructure, setWellStructure] = useState([
     {
@@ -83,7 +87,11 @@ const App = () => {
 
   const fishScale = 0.07;
 
-  const [fish, setFish] = useState({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fishRef = useRef<any>(null);
+
+  const [fishY, setFishY] = useState(100);
+  const [fish] = useState({
     realX: centerBase,
     realY: 100,
     width: fishScale * fishSize.width,
@@ -98,6 +106,30 @@ const App = () => {
       (fish.realY * maxHeight) / totalHeight -
       fish.height / 2,
   };
+
+  const animatedFishPosition = {
+    virtualY: lerp(
+      fishRef.current?.transform?.position?._y ?? fish.realY,
+      initialPosition +
+        (fishY * maxHeight) / totalHeight -
+        fishPosition.height / 2,
+      animationProgress
+    ),
+  };
+
+  // Animation loop using Ticker
+  useEffect(() => {
+    const ticker = new Ticker();
+    ticker.add(() => {
+      setAnimationProgress((prev) => {
+        const newProgress = Math.min(1, prev + 0.005); // Adjust increment for desired speed
+        return newProgress;
+      });
+    });
+    ticker.start();
+
+    return () => ticker.stop();
+  }, [fishY]);
 
   return (
     <>
@@ -125,13 +157,11 @@ const App = () => {
         <span className="w-full text-start">fish</span>
         <input
           className="border border-slate-400 rounded-md"
-          value={fish.realY}
-          onChange={(e) =>
-            setFish((old) => ({
-              ...old,
-              realY: +e.target.value,
-            }))
-          }
+          value={fishY}
+          onChange={(e) => {
+            setAnimationProgress(0);
+            setFishY(+e.target.value);
+          }}
         />
       </div>
       <Stage width={1200} height={1600} options={{ background: 0xf5f5f5 }}>
@@ -164,8 +194,9 @@ const App = () => {
         })}
 
         <Sprite
+          ref={fishRef}
           x={fishPosition.virtualX}
-          y={fishPosition.virtualY}
+          y={animatedFishPosition.virtualY}
           width={fish.width}
           height={fish.height}
           image={"/src/assets/images/nemo.webp"}
