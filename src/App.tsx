@@ -24,9 +24,9 @@ const App = () => {
 
   const {
     draw,
-    totalHeight,
     wellStructure,
     setWellStructure,
+    animateTotalHeight,
     graphicsRefs,
     handleChangeWellPartHeight,
     wellPartHeights,
@@ -35,7 +35,7 @@ const App = () => {
   // without this line, all mouse events are broken
   useMemo(() => new BlurFilter(0), []);
 
-  // FISH
+  // FISH Image sizes
   const fishSize = {
     width: 1920,
     height: 1076,
@@ -57,17 +57,13 @@ const App = () => {
   const fishPosition = {
     ...fish,
     virtualX: fish.realX - fish.width / 2,
-    virtualY:
-      wellInitialPosition +
-      (fish.realY * wellMaxHeight) / totalHeight -
-      fish.height / 2,
   };
 
   const animatedFishPosition = {
     virtualY: lerp(
       fishRef.current?.transform?.position?._y ?? fish.realY,
       wellInitialPosition +
-        (fishY * wellMaxHeight) / totalHeight -
+        (fishY * wellMaxHeight) / animateTotalHeight -
         fishPosition.height / 2,
       animationProgress
     ),

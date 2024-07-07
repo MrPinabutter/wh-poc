@@ -1,15 +1,14 @@
-import { createRef, useEffect, useRef, useState } from "react";
-import { Graphics as PixiGraphics, Ticker } from "pixi.js";
+import { Graphics as PixiGraphics } from "pixi.js";
+import { createRef, useRef, useState } from "react";
 import {
   wellCenterBase,
   wellInitialPosition,
   wellMaxHeight,
 } from "../constants/canva";
 import { lerp } from "../utils";
+import useAnimate from "./useAnimate";
 
 const useDrawBase = () => {
-  const [animationProgress, setAnimationProgress] = useState(0);
-
   // Dimensions
   const [wellStructure, setWellStructure] = useState([
     {
@@ -44,27 +43,34 @@ const useDrawBase = () => {
   const [wellPartHeights, setWellPartHeights] = useState(
     wellStructure.map((it) => it.height)
   );
+  const { animationProgress, setAnimationProgress } = useAnimate([
+    wellPartHeights,
+  ]);
 
-  const handleChangeWellPartHeight = (val: string, idx: number) => {
+  const [lastTotalHeight, setLastTotalHeight] = useState(
+    wellStructure.reduce((acc, it) => acc + it.height, 0)
+  );
+
+  const handleChangeWellPartHeight = (newVal: string, idx: number) => {
     setWellPartHeights((old) =>
-      old.map((inputVal, inputIdx) => (inputIdx === idx ? +val : inputVal))
+      old.map((oldVal, inputIdx) => (inputIdx === idx ? +newVal : oldVal))
     );
-    setAnimationProgress(0)
+
+    setLastTotalHeight(wellStructure.reduce((acc, it) => acc + it.height, 0));
+
+    setWellStructure((old) =>
+      old.map((oldVal, inputIdx) =>
+        inputIdx === idx ? { ...oldVal, height: +newVal } : oldVal
+      )
+    );
+    setAnimationProgress(0);
   };
 
-  // Animation loop using Ticker
-  useEffect(() => {
-    const ticker = new Ticker();
-    ticker.add(() => {
-      setAnimationProgress((prev) => {
-        const newProgress = Math.min(1, prev + 0.005); // Adjust increment for desired speed
-        return newProgress;
-      });
-    });
-    ticker.start();
-
-    return () => ticker.stop();
-  }, [wellPartHeights]);
+  const animateTotalHeight = lerp(
+    lastTotalHeight,
+    wellPartHeights.reduce((acc, it) => acc + it, 0),
+    animationProgress
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const graphicsRefs = useRef<any>([]);
@@ -82,7 +88,7 @@ const useDrawBase = () => {
 
     return {
       ...it,
-      height: lerp(height, wellPartHeights?.[idx], animationProgress),
+      height: lerp(height, wellPartHeights?.[idx], animationProgress), // NOTE: ONLY WORKS BECAUSE OF PROPORTIONS ARE MAINTAINED
     };
   });
 
@@ -127,7 +133,9 @@ const useDrawBase = () => {
     setWellStructure,
     totalHeight,
     graphicsRefs,
+    wellPositions,
     wellPartHeights,
+    animateTotalHeight,
     handleChangeWellPartHeight,
   };
 };
