@@ -2,79 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 import { Container, Graphics, Sprite, Stage } from "@pixi/react";
-import { BlurFilter, Graphics as PixiGraphics, Ticker } from "pixi.js";
-
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+import { BlurFilter, Ticker } from "pixi.js";
+import { lerp } from "./utils";
+import useDrawBase from "./hooks/useDrawBase";
+import { wellCenterBase, wellInitialPosition, wellMaxHeight } from "./constants/canva";
 
 const App = () => {
   const [animationProgress, setAnimationProgress] = useState(0);
 
-  // Dimensions
-  const [wellStructure, setWellStructure] = useState([
-    {
-      type: "wellPart",
-      name: "top",
-      height: 100,
-      width: 240,
-      bgColor: 0xaa0012,
-      bgColorHover: 0x661122,
-      actualColor: 0xaa0012,
-    },
-    {
-      type: "wellPart",
-      name: "middle",
-      height: 100,
-      width: 220,
-      bgColor: 0x3311aa,
-      bgColorHover: 0x44aadd,
-      actualColor: 0x3311aa,
-    },
-    {
-      type: "wellPart",
-      name: "bottom",
-      height: 100,
-      width: 200,
-      bgColor: 0x22aa77,
-      bgColorHover: 0x44dd99,
-      actualColor: 0x22aa77,
-    },
-  ]);
-
-  // Base items
-  const centerBase = 350;
-
-  const maxHeight = 800;
-  const totalHeight = wellStructure.reduce((acc, it) => acc + it.height, 0);
-
-  // Virtual Dimensions
-  const virtualDimensions = wellStructure.map((it) => ({
-    ...it,
-    virtualHeight: (it.height * maxHeight) / totalHeight,
-  }));
-
-  // Positions
-  const initialPosition = 200;
-  const wellPositions = virtualDimensions.map((it, idx, arr) => ({
-    ...it,
-    position:
-      idx == 0
-        ? initialPosition
-        : arr
-            .slice(0, idx)
-            .reduce((acc, items) => acc + items.virtualHeight, initialPosition),
-  }));
-
-  const draw = wellPositions.map((wellPart) => (g: PixiGraphics) => {
-    g.clear();
-    g.beginFill(wellPart.actualColor)
-      .drawRect(
-        centerBase - wellPart.width / 2,
-        wellPart.position,
-        wellPart.width,
-        wellPart.virtualHeight
-      )
-      .endFill();
-  });
+  const { draw, totalHeight, wellStructure, setWellStructure } = useDrawBase();
 
   // without this line, all mouse events are broken
   useMemo(() => new BlurFilter(0), []);
@@ -92,7 +28,7 @@ const App = () => {
 
   const [fishY, setFishY] = useState(100);
   const [fish] = useState({
-    realX: centerBase,
+    realX: wellCenterBase,
     realY: 100,
     width: fishScale * fishSize.width,
     height: fishScale * fishSize.height,
@@ -102,16 +38,16 @@ const App = () => {
     ...fish,
     virtualX: fish.realX - fish.width / 2,
     virtualY:
-      initialPosition +
-      (fish.realY * maxHeight) / totalHeight -
+    wellInitialPosition +
+      (fish.realY * wellMaxHeight) / totalHeight -
       fish.height / 2,
   };
 
   const animatedFishPosition = {
     virtualY: lerp(
       fishRef.current?.transform?.position?._y ?? fish.realY,
-      initialPosition +
-        (fishY * maxHeight) / totalHeight -
+      wellInitialPosition +
+        (fishY * wellMaxHeight) / totalHeight -
         fishPosition.height / 2,
       animationProgress
     ),
