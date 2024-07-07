@@ -1,8 +1,15 @@
-import { useState } from "react";
-import { Graphics as PixiGraphics } from "pixi.js";
-import { wellCenterBase, wellInitialPosition, wellMaxHeight } from "../constants/canva";
+import { createRef, useEffect, useRef, useState } from "react";
+import { Graphics as PixiGraphics, Ticker } from "pixi.js";
+import {
+  wellCenterBase,
+  wellInitialPosition,
+  wellMaxHeight,
+} from "../constants/canva";
+import { lerp } from "../utils";
 
 const useDrawBase = () => {
+  const [animationProgress, setAnimationProgress] = useState(0);
+
   // Dimensions
   const [wellStructure, setWellStructure] = useState([
     {
@@ -34,11 +41,56 @@ const useDrawBase = () => {
     },
   ]);
 
+  const [wellPartHeights, setWellPartHeights] = useState(
+    wellStructure.map((it) => it.height)
+  );
+
+  const handleChangeWellPartHeight = (val: string, idx: number) => {
+    setWellPartHeights((old) =>
+      old.map((inputVal, inputIdx) => (inputIdx === idx ? +val : inputVal))
+    );
+    setAnimationProgress(0)
+  };
+
+  // Animation loop using Ticker
+  useEffect(() => {
+    const ticker = new Ticker();
+    ticker.add(() => {
+      setAnimationProgress((prev) => {
+        const newProgress = Math.min(1, prev + 0.005); // Adjust increment for desired speed
+        return newProgress;
+      });
+    });
+    ticker.start();
+
+    return () => ticker.stop();
+  }, [wellPartHeights]);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const graphicsRefs = useRef<any>([]);
+
+  if (graphicsRefs.current.length !== wellStructure.length) {
+    graphicsRefs.current = wellStructure.map(
+      (_, i) => graphicsRefs.current[i] || createRef()
+    );
+  }
+
+  // Animated heights
+  const animatedWellParts = wellStructure.map((it, idx) => {
+    const { height = it.height } =
+      graphicsRefs.current?.[idx]?.current?.getBounds() || {};
+
+    return {
+      ...it,
+      height: lerp(height, wellPartHeights?.[idx], animationProgress),
+    };
+  });
+
   // Base items
-  const totalHeight = wellStructure.reduce((acc, it) => acc + it.height, 0);
+  const totalHeight = animatedWellParts.reduce((acc, it) => acc + it.height, 0);
 
   // Virtual Dimensions
-  const virtualDimensions = wellStructure.map((it) => ({
+  const virtualDimensions = animatedWellParts.map((it) => ({
     ...it,
     virtualHeight: (it.height * wellMaxHeight) / totalHeight,
   }));
@@ -51,7 +103,10 @@ const useDrawBase = () => {
         ? wellInitialPosition
         : arr
             .slice(0, idx)
-            .reduce((acc, items) => acc + items.virtualHeight, wellInitialPosition),
+            .reduce(
+              (acc, items) => acc + items.virtualHeight,
+              wellInitialPosition
+            ),
   }));
 
   const draw = wellPositions.map((wellPart) => (g: PixiGraphics) => {
@@ -70,7 +125,10 @@ const useDrawBase = () => {
     draw,
     wellStructure,
     setWellStructure,
-    totalHeight
+    totalHeight,
+    graphicsRefs,
+    wellPartHeights,
+    handleChangeWellPartHeight,
   };
 };
 

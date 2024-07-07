@@ -5,12 +5,32 @@ import { Container, Graphics, Sprite, Stage } from "@pixi/react";
 import { BlurFilter, Ticker } from "pixi.js";
 import { lerp } from "./utils";
 import useDrawBase from "./hooks/useDrawBase";
-import { wellCenterBase, wellInitialPosition, wellMaxHeight } from "./constants/canva";
+import {
+  wellCenterBase,
+  wellInitialPosition,
+  wellMaxHeight,
+} from "./constants/canva";
+
+import { gsap } from "gsap";
+import { PixiPlugin } from "gsap/PixiPlugin";
+
+import * as PIXI from "pixi.js";
+
+gsap.registerPlugin(PixiPlugin);
+PixiPlugin.registerPIXI(PIXI);
 
 const App = () => {
   const [animationProgress, setAnimationProgress] = useState(0);
 
-  const { draw, totalHeight, wellStructure, setWellStructure } = useDrawBase();
+  const {
+    draw,
+    totalHeight,
+    wellStructure,
+    setWellStructure,
+    graphicsRefs,
+    handleChangeWellPartHeight,
+    wellPartHeights,
+  } = useDrawBase();
 
   // without this line, all mouse events are broken
   useMemo(() => new BlurFilter(0), []);
@@ -38,7 +58,7 @@ const App = () => {
     ...fish,
     virtualX: fish.realX - fish.width / 2,
     virtualY:
-    wellInitialPosition +
+      wellInitialPosition +
       (fish.realY * wellMaxHeight) / totalHeight -
       fish.height / 2,
   };
@@ -75,16 +95,10 @@ const App = () => {
             <span className="w-full text-start">{it.name}</span>
             <input
               className="border border-slate-400 rounded-md"
-              value={it.height}
-              onChange={(e) =>
-                setWellStructure((old) =>
-                  old.map((item, idx) =>
-                    idx === index
-                      ? { ...item, height: Number(e.target.value) }
-                      : item
-                  )
-                )
-              }
+              value={wellPartHeights?.[index]}
+              onChange={(e) => {
+                handleChangeWellPartHeight(e.target.value, index);
+              }}
             />
           </div>
         ))}
@@ -106,6 +120,7 @@ const App = () => {
             <Graphics
               key={idx}
               draw={it}
+              ref={graphicsRefs.current?.[idx]}
               onmouseenter={() => {
                 setWellStructure((old) =>
                   old.map((actualItem, oldIdx) =>
