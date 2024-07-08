@@ -94,6 +94,7 @@ const useDrawBase = () => {
 
   // Base items
   const totalHeight = animatedWellParts.reduce((acc, it) => acc + it.height, 0);
+  const wellHeight = wellPartHeights.reduce((acc, it) => acc + it, 0);
 
   // Virtual Dimensions
   const virtualDimensions = animatedWellParts.map((it) => ({
@@ -133,6 +134,7 @@ const useDrawBase = () => {
     setWellStructure,
     totalHeight,
     graphicsRefs,
+    wellHeight,
     wellPositions,
     wellPartHeights,
     animateTotalHeight,

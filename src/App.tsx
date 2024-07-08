@@ -1,36 +1,35 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import "./App.css";
 
 import { Container, Graphics, Sprite, Stage } from "@pixi/react";
-import { BlurFilter, Ticker } from "pixi.js";
-import { lerp } from "./utils";
-import useDrawBase from "./hooks/useDrawBase";
+import { BlurFilter } from "pixi.js";
 import {
   wellCenterBase,
   wellInitialPosition,
   wellMaxHeight,
 } from "./constants/canva";
+import useDrawBase from "./hooks/useDrawBase";
+import { lerp } from "./utils";
 
-import { gsap } from "gsap";
-import { PixiPlugin } from "gsap/PixiPlugin";
-
-import * as PIXI from "pixi.js";
-
-gsap.registerPlugin(PixiPlugin);
-PixiPlugin.registerPIXI(PIXI);
+import useAnimate from "./hooks/useAnimate";
+import useRuler from "./hooks/useRuler";
 
 const App = () => {
-  const [animationProgress, setAnimationProgress] = useState(0);
-
   const {
     draw,
     wellStructure,
     setWellStructure,
-    animateTotalHeight,
+    wellHeight,
     graphicsRefs,
     handleChangeWellPartHeight,
     wellPartHeights,
   } = useDrawBase();
+
+  const { drawRuler, fontLoaded } = useRuler({
+    totalTicks: 14,
+    tickHeight: 10,
+    wellHeight,
+  });
 
   // without this line, all mouse events are broken
   useMemo(() => new BlurFilter(0), []);
@@ -54,6 +53,8 @@ const App = () => {
     height: fishScale * fishSize.height,
   });
 
+  const { setAnimationProgress, animationProgress } = useAnimate([fishY]);
+
   const fishPosition = {
     ...fish,
     virtualX: fish.realX - fish.width / 2,
@@ -63,25 +64,13 @@ const App = () => {
     virtualY: lerp(
       fishRef.current?.transform?.position?._y ?? fish.realY,
       wellInitialPosition +
-        (fishY * wellMaxHeight) / animateTotalHeight -
+        (fishY * wellMaxHeight) / wellHeight -
         fishPosition.height / 2,
       animationProgress
     ),
   };
 
-  // Animation loop using Ticker
-  useEffect(() => {
-    const ticker = new Ticker();
-    ticker.add(() => {
-      setAnimationProgress((prev) => {
-        const newProgress = Math.min(1, prev + 0.005); // Adjust increment for desired speed
-        return newProgress;
-      });
-    });
-    ticker.start();
-
-    return () => ticker.stop();
-  }, [fishY]);
+  if (!fontLoaded) return <>Loading...</>;
 
   return (
     <>
@@ -110,7 +99,17 @@ const App = () => {
           }}
         />
       </div>
-      <Stage width={1200} height={1600} options={{ background: 0xf5f5f5 }}>
+      <Stage
+        width={800}
+        height={1200}
+        options={{
+          background: 0xf5f5f5,
+          resolution: 2,
+          antialias: true,
+          autoDensity: true,
+          premultipliedAlpha: true,
+        }}
+      >
         {draw.map((it, idx) => {
           return (
             <Graphics
@@ -148,6 +147,8 @@ const App = () => {
           height={fish.height}
           image={"/src/assets/images/nemo.webp"}
         />
+
+        <Graphics draw={drawRuler} />
 
         <Container x={200} y={200}></Container>
       </Stage>

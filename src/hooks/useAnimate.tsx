@@ -9,7 +9,7 @@ const useAnimate = (depVariables: unknown[]) => {
     const ticker = new Ticker();
     ticker.add(() => {
       setAnimationProgress((prev) => {
-        const newProgress = Math.min(1, prev + 0.005); // Adjust increment for desired speed
+        const newProgress = Math.min(1, prev + 0.15); // Adjust increment for desired speed
         return newProgress;
       });
     });
