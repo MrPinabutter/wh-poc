@@ -8,11 +8,25 @@ import {
 
 interface useTrianglesProps {
   wellHeight: number;
+  wellStructure: {
+    type: string;
+    name: string;
+    height: number;
+    width: number;
+    bgColor: number;
+    bgColorHover: number;
+    actualColor: number;
+  }[];
 }
 
-const useTriangles = ({ wellHeight }: useTrianglesProps) => {
+const useTriangles = ({ wellHeight, wellStructure }: useTrianglesProps) => {
+  const wellStructureWithRealY = wellStructure.map((it, idx, arr) => {
+    const realY = arr.slice(0, idx).reduce((acc, it) => it.height + acc, 0);
+    return { ...it, realY };
+  });
+
   // Dimensions
-  const [triangles, settriangles] = useState([
+  const [triangles, setTriangles] = useState([
     {
       name: "triangles",
       height: 15,
@@ -67,25 +81,31 @@ const useTriangles = ({ wellHeight }: useTrianglesProps) => {
   //      \|
   //       c
 
-  const draw = virtualDimensions.map((wellPart) => (g: PixiGraphics) => {
-    const offsetX = 100;
+  const draw = virtualDimensions.map((triangle) => (g: PixiGraphics) => {
+    const offsetX =
+      (wellStructureWithRealY.find(
+        (wellPart) =>
+          wellPart.realY <= triangle.realY &&
+          wellPart.realY + wellPart.height > triangle.realY
+      )?.width || 0) / 2;
+
     g.clear();
-    g.beginFill(wellPart.actualColor)
-      .moveTo(wellCenterBase + offsetX + wellPart.width, wellPart.virtualY) // b
-      .lineTo(wellCenterBase + offsetX, wellPart.virtualY + wellPart.height / 2) // a
-      .lineTo(wellCenterBase + offsetX, wellPart.virtualY - wellPart.height / 2) // c
+    g.beginFill(triangle.actualColor)
+      .moveTo(wellCenterBase + offsetX + triangle.width, triangle.virtualY) // b
+      .lineTo(wellCenterBase + offsetX, triangle.virtualY + triangle.height / 2) // a
+      .lineTo(wellCenterBase + offsetX, triangle.virtualY - triangle.height / 2) // c
       .endFill();
-    g.beginFill(wellPart.actualColor)
-      .moveTo(wellCenterBase - offsetX - wellPart.width, wellPart.virtualY) // b
-      .lineTo(wellCenterBase - offsetX, wellPart.virtualY + wellPart.height / 2) // a
-      .lineTo(wellCenterBase - offsetX, wellPart.virtualY - wellPart.height / 2) // c
+    g.beginFill(triangle.actualColor)
+      .moveTo(wellCenterBase - offsetX - triangle.width, triangle.virtualY) // b
+      .lineTo(wellCenterBase - offsetX, triangle.virtualY + triangle.height / 2) // a
+      .lineTo(wellCenterBase - offsetX, triangle.virtualY - triangle.height / 2) // c
       .endFill();
   });
 
   return {
     draw,
     triangles,
-    settriangles,
+    setTriangles,
     graphicsRefs,
   };
 };

@@ -20,7 +20,10 @@ const App = () => {
     wellPartHeights,
   } = useDrawBase();
 
-  const { draw: drawTriangles } = useTriangles({ wellHeight });
+  const { draw: drawTriangles } = useTriangles({
+    wellHeight,
+    wellStructure,
+  });
 
   const { drawRuler, fontLoaded } = useRuler({
     totalTicks: 14,
