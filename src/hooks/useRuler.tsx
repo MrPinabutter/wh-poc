@@ -36,7 +36,7 @@ const useRuler = ({
     for (let i = 0; i <= totalTicks; i++) {
       const y = i * spacing + wellInitialPosition;
       const virtualY = i * virtualSpacing;
-      g.moveTo(0, y);
+      g.moveTo(20, y);
       g.lineTo(tickHeight, y);
 
       // Add the tick text
@@ -46,7 +46,7 @@ const useRuler = ({
       });
 
       text.cacheAsBitmap = true;
-      text.position.set(tickHeight + 5, y - text.height / 2); // Adjust the position to the right of the tick
+      text.position.set(tickHeight + 5 + 20, y - text.height / 2); // Adjust the position to the right of the tick
       g.addChild(text);
     }
   };

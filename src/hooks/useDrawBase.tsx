@@ -17,7 +17,7 @@ const useDrawBase = () => {
       height: 100,
       width: 240,
       bgColor: 0xaa0012,
-      bgColorHover: 0x661122,
+      bgColorHover: 0xbb2233,
       actualColor: 0xaa0012,
     },
     {
@@ -26,7 +26,7 @@ const useDrawBase = () => {
       height: 100,
       width: 220,
       bgColor: 0x3311aa,
-      bgColorHover: 0x44aadd,
+      bgColorHover: 0x4433aa,
       actualColor: 0x3311aa,
     },
     {
@@ -35,7 +35,7 @@ const useDrawBase = () => {
       height: 100,
       width: 200,
       bgColor: 0x22aa77,
-      bgColorHover: 0x44dd99,
+      bgColorHover: 0x33bb88,
       actualColor: 0x22aa77,
     },
   ]);

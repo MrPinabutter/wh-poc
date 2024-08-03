@@ -7,6 +7,7 @@ import useDrawBase from "./hooks/useDrawBase";
 
 import { useFish } from "./hooks/useFish";
 import useRuler from "./hooks/useRuler";
+import useTriangles from "./hooks/useTriangles";
 
 const App = () => {
   const {
@@ -18,6 +19,8 @@ const App = () => {
     handleChangeWellPartHeight,
     wellPartHeights,
   } = useDrawBase();
+
+  const { draw: drawTriangles } = useTriangles({ wellHeight });
 
   const { drawRuler, fontLoaded } = useRuler({
     totalTicks: 14,
@@ -49,7 +52,7 @@ const App = () => {
           </div>
         ))}
       </div>
-      <div className="flex flex-col gap-2 max-w-96">
+      <div className="flex flex-col gap-2 max-w-96 mb-4">
         <span className="w-full text-start">fish</span>
         <input
           className="border border-slate-400 rounded-md"
@@ -96,6 +99,10 @@ const App = () => {
             />
           );
         })}
+
+        {drawTriangles.map((it, idx) => (
+          <Graphics draw={it} key={idx} />
+        ))}
 
         <Sprite
           ref={fishRef}
