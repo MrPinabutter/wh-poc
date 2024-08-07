@@ -21,12 +21,11 @@ const App = () => {
   } = useDrawBase();
 
   const { draw: drawTriangles } = useTriangles({
-    wellHeight,
     wellStructure,
   });
 
   const { drawRuler, fontLoaded } = useRuler({
-    totalTicks: 14,
+    totalTicks: 6,
     tickHeight: 10,
     wellHeight,
   });
@@ -74,6 +73,10 @@ const App = () => {
           premultipliedAlpha: true,
         }}
       >
+        {drawTriangles.map((it, idx) => (
+          <Graphics draw={it} key={idx} />
+        ))}
+
         {draw.map((it, idx) => {
           return (
             <Graphics
@@ -102,10 +105,6 @@ const App = () => {
             />
           );
         })}
-
-        {drawTriangles.map((it, idx) => (
-          <Graphics draw={it} key={idx} />
-        ))}
 
         <Sprite
           ref={fishRef}

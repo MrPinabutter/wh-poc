@@ -7,7 +7,6 @@ import {
 } from "../constants/canva";
 
 interface useTrianglesProps {
-  wellHeight: number;
   wellStructure: {
     type: string;
     name: string;
@@ -19,7 +18,9 @@ interface useTrianglesProps {
   }[];
 }
 
-const useTriangles = ({ wellHeight, wellStructure }: useTrianglesProps) => {
+const useTriangles = ({ wellStructure }: useTrianglesProps) => {
+  // REMOVER O WELLHEIGHT
+  const wellHeight = wellStructure.reduce((acc, it) => acc + it.height, 0);
   const wellStructureWithRealY = wellStructure.map((it, idx, arr) => {
     const realY = arr.slice(0, idx).reduce((acc, it) => it.height + acc, 0);
     return { ...it, realY };
@@ -34,7 +35,7 @@ const useTriangles = ({ wellHeight, wellStructure }: useTrianglesProps) => {
       bgColor: 0xaa0012,
       bgColorHover: 0xac1133,
       actualColor: 0x555555,
-      realY: 120,
+      realY: 99,
     },
     {
       type: "triangles",
@@ -44,7 +45,7 @@ const useTriangles = ({ wellHeight, wellStructure }: useTrianglesProps) => {
       bgColor: 0x3311aa,
       bgColorHover: 0x44aadd,
       actualColor: 0x777777,
-      realY: 100,
+      realY: 200,
     },
     {
       type: "triangles",
@@ -54,7 +55,7 @@ const useTriangles = ({ wellHeight, wellStructure }: useTrianglesProps) => {
       bgColor: 0x22aa77,
       bgColorHover: 0x44dd99,
       actualColor: 0x999999,
-      realY: 200,
+      realY: 6,
     },
   ]);
 
@@ -73,13 +74,13 @@ const useTriangles = ({ wellHeight, wellStructure }: useTrianglesProps) => {
     virtualY: wellInitialPosition + (it.realY * wellMaxHeight) / wellHeight,
   }));
 
-  //       a
-  //      /|
-  //     / |
-  //    b  |
-  //     \ |
-  //      \|
-  //       c
+  //       a ------ a'
+  //      /           \
+  //     /             \
+  //    b               b'
+  //     \             /
+  //      \           /
+  //       c ------ c'
 
   const draw = virtualDimensions.map((triangle) => (g: PixiGraphics) => {
     const offsetX =
@@ -91,14 +92,12 @@ const useTriangles = ({ wellHeight, wellStructure }: useTrianglesProps) => {
 
     g.clear();
     g.beginFill(triangle.actualColor)
-      .moveTo(wellCenterBase + offsetX + triangle.width, triangle.virtualY) // b
-      .lineTo(wellCenterBase + offsetX, triangle.virtualY + triangle.height / 2) // a
+      .moveTo(wellCenterBase + offsetX, triangle.virtualY + triangle.height / 2) // a
+      .lineTo(wellCenterBase + offsetX + triangle.width, triangle.virtualY) // b
       .lineTo(wellCenterBase + offsetX, triangle.virtualY - triangle.height / 2) // c
-      .endFill();
-    g.beginFill(triangle.actualColor)
-      .moveTo(wellCenterBase - offsetX - triangle.width, triangle.virtualY) // b
-      .lineTo(wellCenterBase - offsetX, triangle.virtualY + triangle.height / 2) // a
-      .lineTo(wellCenterBase - offsetX, triangle.virtualY - triangle.height / 2) // c
+      .lineTo(wellCenterBase - offsetX, triangle.virtualY - triangle.height / 2) // c'
+      .lineTo(wellCenterBase - offsetX - triangle.width, triangle.virtualY) // b'
+      .lineTo(wellCenterBase - offsetX, triangle.virtualY + triangle.height / 2) // a'
       .endFill();
   });
 
