@@ -11,7 +11,7 @@ interface ScaleRuler {
 }
 
 const useRuler = ({
-  totalTicks = 10,
+  totalTicks = 30,
   tickHeight = 10,
   wellHeight,
 }: ScaleRuler) => {
@@ -20,9 +20,15 @@ const useRuler = ({
 
   useEffect(() => {
     // Load the bitmap font
-    PIXI.Assets.load("src/assets/fonts/Minecraft.ttf").then(() => {
-      setFontLoaded(true);
-    });
+    PIXI.Assets.load("src/assets/fonts/Minecraft.ttf")
+      .then(() => {
+        setFontLoaded(true);
+      })
+      .catch((error) => {
+        console.log(error);
+
+        setFontLoaded(true);
+      });
   }, []);
 
   const drawRuler = (g: PixiGraphics) => {
